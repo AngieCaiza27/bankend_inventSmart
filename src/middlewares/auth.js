@@ -24,16 +24,6 @@ const verifyToken = (req, res, next) => {
     }
 };
 
-// Verificar rol de administrador
-const isAdmin = (req, res, next) => {
-    if (req.user.rol !== 'admin') {
-        return res.status(403).json({
-            success: false,
-            message: 'Acceso denegado. Se requiere rol de administrador'
-        });
-    }
-    next();
-};
 
 // Verificar que el usuario esté activo
 const isActive = (req, res, next) => {
@@ -48,6 +38,5 @@ const isActive = (req, res, next) => {
 
 module.exports = {
     verifyToken,
-    isAdmin,
     isActive
 };
