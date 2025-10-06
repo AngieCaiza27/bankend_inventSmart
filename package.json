@@ -6,7 +6,10 @@
     "start": "node index.js",
     "dev": "nodemon index.js"
   },
-  "keywords": ["inventory", "management"],
+  "keywords": [
+    "inventory",
+    "management"
+  ],
   "author": "ASTM",
   "license": "ISC",
   "description": "",
