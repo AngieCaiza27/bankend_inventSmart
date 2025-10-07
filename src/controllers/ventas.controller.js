@@ -17,7 +17,6 @@ exports.registrarVenta = async (req, res) => {
     // Actualizar stock
     await Ventas.actualizarStock(producto_id, unidades);
 
-    // ✅ No se toca historial de stock aquí
 
     res.status(201).json({
       message: 'Venta registrada con éxito',
