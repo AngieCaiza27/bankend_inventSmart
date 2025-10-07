@@ -6,20 +6,18 @@ exports.registrarVenta = async (req, res) => {
 
     const { producto_id, unidades, usuario_id } = req.body;
 
-
+    // Validar datos
     if (!producto_id || !unidades || !usuario_id) {
       return res.status(400).json({ message: 'Faltan datos para registrar la venta' });
     }
 
-
+    // Registrar venta
     const ventaId = await Ventas.registrarVenta(producto_id, unidades, usuario_id);
 
-
+    // Actualizar stock
     await Ventas.actualizarStock(producto_id, unidades);
 
-
-    await Ventas.registrarHistorialStock(producto_id, unidades, 'Venta realizada');
-
+    // ✅ No se toca historial de stock aquí
 
     res.status(201).json({
       message: 'Venta registrada con éxito',
@@ -35,6 +33,7 @@ exports.registrarVenta = async (req, res) => {
   }
 };
 
+// 🧾 Historial general de ventas
 exports.historialVentas = async (req, res) => {
   try {
     const resultados = await Ventas.obtenerHistorial();
@@ -47,6 +46,7 @@ exports.historialVentas = async (req, res) => {
   }
 };
 
+// 🔍 Detalle por producto
 exports.detallePorProducto = async (req, res) => {
   try {
     const productoId = req.params.id;
