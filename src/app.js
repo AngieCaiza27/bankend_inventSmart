@@ -12,11 +12,11 @@ app.use(express.urlencoded({ extended: true }));
 
 // Ruta de prueba
 app.get('/', (req, res) => {
-    res.json({
-        success: true,
-        message: 'API InventSmart funcionando correctamente',
-        version: '1.0.0'
-    });
+  res.json({
+    success: true,
+    message: 'API InventSmart funcionando correctamente',
+    version: '1.0.0'
+  });
 });
 
 // Rutas de la API (las agregaremos después)
@@ -26,7 +26,7 @@ app.get('/', (req, res) => {
 // app.use('/api/proveedores', require('./routes/proveedores.routes'));
 // app.use('/api/categorias', require('./routes/categorias.routes'));
 // app.use('/api/ventas', require('./routes/ventas.routes'));
-// app.use('/api/reportes', require('./routes/reportes.routes'));
+app.use('/api/reportes', require('./routes/reportes.routes'));
 
 // Middlewares de error (deben ir al final)
 app.use(notFound);
