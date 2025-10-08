@@ -17,14 +17,21 @@ app.get('/', (req, res) => {
     message: 'API InventSmart funcionando correctamente',
     version: '1.0.0'
   });
+  res.json({
+    success: true,
+    message: 'API InventSmart funcionando correctamente',
+    version: '1.0.0'
+  });
 });
 
-// Rutas de la API (las agregaremos después)
-// app.use('/api/auth', require('./routes/auth.routes'));
+// Rutas de la API 
+app.use('/api/auth', require('./routes/auth.routes'));
 // app.use('/api/usuarios', require('./routes/usuarios.routes'));
 // app.use('/api/productos', require('./routes/productos.routes'));
 // app.use('/api/proveedores', require('./routes/proveedores.routes'));
 // app.use('/api/categorias', require('./routes/categorias.routes'));
+app.use('/api/ventas', require('./routes/ventas.routes'));
+// app.use('/api/reportes', require('./routes/reportes.routes'));
 // app.use('/api/ventas', require('./routes/ventas.routes'));
 app.use('/api/reportes', require('./routes/reportes.routes'));
 
