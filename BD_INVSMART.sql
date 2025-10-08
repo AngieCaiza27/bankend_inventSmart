@@ -27,6 +27,7 @@ CREATE TABLE proveedor_categoria (
 -- Tabla: Productos
 CREATE TABLE productos (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
     categoria_id INT,
     proveedor_id INT,
     precio DECIMAL(10,2) NOT NULL,
@@ -78,3 +79,7 @@ CREATE TABLE historial_stock (
     motivo VARCHAR(255),
     FOREIGN KEY (producto_id) REFERENCES productos(id)
 );
+
+-- si se utilizo la tabla anterior de productos
+ALTER TABLE productos 
+ADD COLUMN nombre VARCHAR(100) NOT NULL AFTER id;

@@ -36,7 +36,19 @@ const isActive = (req, res, next) => {
     next();
 };
 
+// Verificar rol de administrador
+const isAdmin = (req, res, next) => {
+    if (req.user.rol !== 'admin') {
+        return res.status(403).json({
+            success: false,
+            message: 'Acceso denegado. Se requiere rol de administrador'
+        });
+    }
+    next();
+};
+
 module.exports = {
     verifyToken,
-    isActive
+    isActive,
+    isAdmin
 };
