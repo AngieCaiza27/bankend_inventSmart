@@ -323,10 +323,20 @@ class ProductoController {
                 });
             }
 
-            if (estado === undefined) {
+            // Validar estado
+            const estadosValidos = ['activo', 'desactivado', 'agotado'];
+            if (!estado || !estadosValidos.includes(estado)) {
                 return res.status(400).json({
                     success: false,
-                    message: 'El estado es obligatorio'
+                    message: `El estado debe ser uno de: ${estadosValidos.join(', ')}`
+                });
+            }
+
+            // No permitir cambiar manualmente a 'agotado' si hay stock
+            if (estado === 'agotado' && producto.stock > 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'No se puede marcar como agotado un producto con stock disponible'
                 });
             }
 
@@ -334,7 +344,7 @@ class ProductoController {
 
             res.json({
                 success: true,
-                message: `Producto ${estado ? 'activado' : 'desactivado'} exitosamente`
+                message: `Producto cambiado a estado: ${estado}`
             });
         } catch (error) {
             console.error('Error al cambiar estado:', error);
@@ -350,6 +360,7 @@ class ProductoController {
     static async delete(req, res) {
         try {
             const { id } = req.params;
+            const { force } = req.query; // ?force=true para eliminación física
 
             const producto = await ProductoModel.findById(id);
             if (!producto) {
@@ -359,23 +370,43 @@ class ProductoController {
                 });
             }
 
-            // Verificar si tiene ventas asociadas
-            const tieneVentas = await ProductoModel.hasVentas(id);
-            if (tieneVentas) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'No se puede eliminar el producto porque tiene ventas asociadas'
+            // Si force=true, eliminar físicamente (solo si no tiene ventas)
+            if (force === 'true') {
+                // Verificar si tiene ventas asociadas
+                const tieneVentas = await ProductoModel.hasVentas(id);
+                if (tieneVentas) {
+                    return res.status(400).json({
+                        success: false,
+                        message: 'No se puede eliminar el producto porque tiene ventas asociadas. Use soft delete (sin ?force=true)'
+                    });
+                }
+
+                await ProductoModel.delete(id);
+
+                return res.json({
+                    success: true,
+                    message: 'Producto eliminado permanentemente'
                 });
             }
 
-            await ProductoModel.delete(id);
+            // Soft delete - solo cambiar estado a false
+            await ProductoModel.changeStatus(id, 'desactivado');
 
             res.json({
                 success: true,
-                message: 'Producto eliminado exitosamente'
+                message: 'Producto desactivado exitosamente (soft delete)'
             });
         } catch (error) {
             console.error('Error al eliminar producto:', error);
+            
+            // Manejar error de foreign key
+            if (error.message.includes('foreign key constraint fails')) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'No se puede eliminar el producto porque tiene datos relacionados. Se recomienda desactivarlo en lugar de eliminarlo.'
+                });
+            }
+
             res.status(500).json({
                 success: false,
                 message: 'Error al eliminar producto',

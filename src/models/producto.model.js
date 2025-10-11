@@ -5,9 +5,16 @@ class ProductoModel {
     // Crear nuevo producto
     static async create(productoData) {
         const { nombre, categoria_id, proveedor_id, precio, stock, stock_minimo } = productoData;
+        
+        // Determinar estado inicial basado en stock
+        let estado = 'activo';
+        if (stock === 0) {
+            estado = 'agotado';
+        }
+        
         const query = `
             INSERT INTO productos (nombre, categoria_id, proveedor_id, precio, stock, stock_minimo, estado) 
-            VALUES (?, ?, ?, ?, ?, ?, TRUE)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         `;
         const [result] = await pool.execute(query, [
             nombre,
@@ -15,7 +22,8 @@ class ProductoModel {
             proveedor_id || null,
             precio,
             stock || 0,
-            stock_minimo || 5
+            stock_minimo || 5,
+            estado
         ]);
         
         // Registrar en historial de stock si se crea con stock inicial
