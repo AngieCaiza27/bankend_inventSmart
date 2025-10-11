@@ -5,13 +5,13 @@ class ProductoModel {
     // Crear nuevo producto
     static async create(productoData) {
         const { nombre, categoria_id, proveedor_id, precio, stock, stock_minimo } = productoData;
-        
+
         // Determinar estado inicial basado en stock
         let estado = 'activo';
         if (stock === 0) {
             estado = 'agotado';
         }
-        
+
         const query = `
             INSERT INTO productos (nombre, categoria_id, proveedor_id, precio, stock, stock_minimo, estado) 
             VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -25,12 +25,12 @@ class ProductoModel {
             stock_minimo || 5,
             estado
         ]);
-        
+
         // Registrar en historial de stock si se crea con stock inicial
         if (stock && stock > 0) {
             await this.registrarCambioStock(result.insertId, stock, 'Stock inicial');
         }
-        
+
         return result.insertId;
     }
 
@@ -45,7 +45,7 @@ class ProductoModel {
             LEFT JOIN categorias c ON p.categoria_id = c.id
             LEFT JOIN proveedores pr ON p.proveedor_id = pr.id
         `;
-        
+
         const conditions = [];
         const params = [];
 
@@ -60,7 +60,7 @@ class ProductoModel {
             params.push(filters.proveedor_id);
         }
 
-        if (filters.estado !== undefined) {
+        if (filters.estado) {
             conditions.push('p.estado = ?');
             params.push(filters.estado);
         }
@@ -122,14 +122,14 @@ class ProductoModel {
         if (!productoActual) return false;
 
         const cambio = nuevaCantidad - productoActual.stock;
-        
+
         const query = 'UPDATE productos SET stock = ? WHERE id = ?';
         const [result] = await pool.execute(query, [nuevaCantidad, id]);
-        
+
         if (result.affectedRows > 0) {
             await this.registrarCambioStock(id, cambio, motivo);
         }
-        
+
         return result.affectedRows > 0;
     }
 
@@ -137,11 +137,11 @@ class ProductoModel {
     static async incrementStock(id, cantidad, motivo = 'Entrada de mercancía') {
         const query = 'UPDATE productos SET stock = stock + ? WHERE id = ?';
         const [result] = await pool.execute(query, [cantidad, id]);
-        
+
         if (result.affectedRows > 0) {
             await this.registrarCambioStock(id, cantidad, motivo);
         }
-        
+
         return result.affectedRows > 0;
     }
 
@@ -149,11 +149,11 @@ class ProductoModel {
     static async decrementStock(id, cantidad, motivo = 'Venta') {
         const query = 'UPDATE productos SET stock = stock - ? WHERE id = ? AND stock >= ?';
         const [result] = await pool.execute(query, [cantidad, id, cantidad]);
-        
+
         if (result.affectedRows > 0) {
             await this.registrarCambioStock(id, -cantidad, motivo);
         }
-        
+
         return result.affectedRows > 0;
     }
 
@@ -221,12 +221,12 @@ class ProductoModel {
     static async nombreExists(nombre, excludeId = null) {
         let query = 'SELECT id FROM productos WHERE nombre = ?';
         let params = [nombre];
-        
+
         if (excludeId) {
             query += ' AND id != ?';
             params.push(excludeId);
         }
-        
+
         const [rows] = await pool.execute(query, params);
         return rows.length > 0;
     }

@@ -66,7 +66,7 @@ class ProductoController {
             const filters = {};
             if (categoria_id) filters.categoria_id = categoria_id;
             if (proveedor_id) filters.proveedor_id = proveedor_id;
-            if (estado !== undefined) filters.estado = estado === 'true';
+            if (estado) filters.estado = estado;
             if (stock_bajo === 'true') filters.stock_bajo = true;
 
             const productos = await ProductoModel.findAll(filters);
