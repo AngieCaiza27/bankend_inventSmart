@@ -184,8 +184,8 @@ class ProductoController {
         try {
             const { id } = req.params;
             const { stock, motivo } = req.body;
-
-            if (stock === undefined || stock < 0) {
+            const cantidad = Number(stock);
+            if (isNaN(cantidad) || cantidad < 0) {
                 return res.status(400).json({
                     success: false,
                     message: 'El stock debe ser un número válido mayor o igual a 0'
@@ -200,7 +200,7 @@ class ProductoController {
                 });
             }
 
-            await ProductoModel.updateStock(id, stock, motivo || 'Ajuste manual');
+            await ProductoModel.updateStock(id, cantidad, motivo || 'Ajuste manual');
 
             const productoActualizado = await ProductoModel.findById(id);
 
@@ -266,8 +266,8 @@ class ProductoController {
                 success: true,
                 data: productos,
                 total: productos.length,
-                message: productos.length > 0 
-                    ? `${productos.length} producto(s) con stock bajo` 
+                message: productos.length > 0
+                    ? `${productos.length} producto(s) con stock bajo`
                     : 'No hay productos con stock bajo'
             });
         } catch (error) {
@@ -398,7 +398,7 @@ class ProductoController {
             });
         } catch (error) {
             console.error('Error al eliminar producto:', error);
-            
+
             // Manejar error de foreign key
             if (error.message.includes('foreign key constraint fails')) {
                 return res.status(400).json({

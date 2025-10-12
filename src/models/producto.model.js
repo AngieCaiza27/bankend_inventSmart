@@ -116,15 +116,18 @@ class ProductoModel {
         return result.affectedRows > 0;
     }
 
-    // Actualizar stock
-    static async updateStock(id, nuevaCantidad, motivo = 'Ajuste manual') {
+    // Actualizar stock (sumar o restar respecto al actual)
+    static async updateStock(id, cambio, motivo = 'Ajuste manual') {
         const productoActual = await this.findById(id);
         if (!productoActual) return false;
 
-        const cambio = nuevaCantidad - productoActual.stock;
+        const nuevoStock = productoActual.stock + cambio;
+
+        // Evita stock negativo
+        if (nuevoStock < 0) return false;
 
         const query = 'UPDATE productos SET stock = ? WHERE id = ?';
-        const [result] = await pool.execute(query, [nuevaCantidad, id]);
+        const [result] = await pool.execute(query, [nuevoStock, id]);
 
         if (result.affectedRows > 0) {
             await this.registrarCambioStock(id, cambio, motivo);
@@ -132,7 +135,6 @@ class ProductoModel {
 
         return result.affectedRows > 0;
     }
-
     // Incrementar stock
     static async incrementStock(id, cantidad, motivo = 'Entrada de mercancía') {
         const query = 'UPDATE productos SET stock = stock + ? WHERE id = ?';
