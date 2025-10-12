@@ -1,6 +1,6 @@
 const { pool } = require('../config/database');
 
-// 1️⃣ Registrar una venta
+//  Registrar una venta
 exports.registrarVenta = async (producto_id, unidades, usuario_id) => {
   // Buscar el producto y su stock
   const [producto] = await pool.query(
@@ -16,24 +16,41 @@ exports.registrarVenta = async (producto_id, unidades, usuario_id) => {
   // Calcular total
   const total = precio * unidades;
 
-  // Insertar la venta
-  const [result] = await pool.query(
-    'INSERT INTO ventas (producto_id, unidades, total, usuario_id) VALUES (?, ?, ?, ?)',
-    [producto_id, unidades, total, usuario_id]
-  );
+  // Iniciar transacción para asegurar consistencia
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
 
-  return result.insertId;
+    // Insertar la venta
+    const [result] = await connection.query(
+      'INSERT INTO ventas (producto_id, unidades, total, usuario_id) VALUES (?, ?, ?, ?)',
+      [producto_id, unidades, total, usuario_id]
+    );
+
+    // Actualizar stock del producto
+    await connection.query(
+      'UPDATE productos SET stock = stock - ? WHERE id = ?',
+      [unidades, producto_id]
+    );
+
+    // Registrar movimiento en historial_stock
+    await connection.query(
+      `INSERT INTO historial_stock (producto_id, cambio, motivo) VALUES (?, ?, ?)`,
+      [producto_id, -unidades, 'Venta de realizada']
+    );
+
+    // Confirmar transacción
+    await connection.commit();
+
+    return result.insertId;
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
 };
-
-// 2️⃣ Actualizar stock después de la venta
-exports.actualizarStock = async (producto_id, unidades) => {
-  await pool.query(
-    'UPDATE productos SET stock = stock - ? WHERE id = ?',
-    [unidades, producto_id]
-  );
-};
-
-// 3️⃣ Obtener historial general de ventas (todas las ventas)
+//  Obtener historial general de ventas (todas las ventas)
 exports.obtenerHistorial = async () => {
   const [rows] = await pool.query(`
     SELECT 
@@ -51,7 +68,7 @@ exports.obtenerHistorial = async () => {
   return rows;
 };
 
-// 4️⃣ Obtener detalle de ventas por producto
+// Obtener detalle de ventas por producto
 exports.obtenerDetallePorProducto = async (producto_id) => {
   const [rows] = await pool.query(`
     SELECT 

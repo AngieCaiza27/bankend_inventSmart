@@ -2,7 +2,7 @@ const Ventas = require('../models/ventas.model');
 
 exports.registrarVenta = async (req, res) => {
   try {
-    console.log('📦 Datos recibidos:', req.body);
+    console.log('Datos recibidos:', req.body);
 
     const { producto_id, unidades, usuario_id } = req.body;
 
@@ -11,12 +11,8 @@ exports.registrarVenta = async (req, res) => {
       return res.status(400).json({ message: 'Faltan datos para registrar la venta' });
     }
 
-    // Registrar venta
+    // Registrar venta y obtener ID insertado
     const ventaId = await Ventas.registrarVenta(producto_id, unidades, usuario_id);
-
-    // Actualizar stock
-    await Ventas.actualizarStock(producto_id, unidades);
-
 
     res.status(201).json({
       message: 'Venta registrada con éxito',
@@ -24,7 +20,7 @@ exports.registrarVenta = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Error en registrarVenta:', error);
+    console.error('Error en registrarVenta:', error);
     res.status(500).json({
       message: 'Error al registrar venta',
       error: error.message,
@@ -45,7 +41,7 @@ exports.historialVentas = async (req, res) => {
   }
 };
 
-// 🔍 Detalle por producto
+// Detalle por producto
 exports.detallePorProducto = async (req, res) => {
   try {
     const productoId = req.params.id;
