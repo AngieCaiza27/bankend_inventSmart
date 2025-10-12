@@ -161,6 +161,31 @@ class ProveedorModel {
         const [rows] = await pool.execute(query, params);
         return rows.length > 0;
     }
+
+    // Contar total de proveedores
+    static async countAll(includeInactive = false) {
+        let query = 'SELECT COUNT(*) as total FROM proveedores';
+        if (!includeInactive) {
+            query += ' WHERE estado = TRUE';
+        }
+        const [rows] = await pool.execute(query);
+        return rows[0].total;
+    }
+
+    // Estadísticas de proveedores
+    static async getEstadisticas() {
+        const query = `
+            SELECT 
+                COUNT(*) as total_proveedores,
+                COUNT(CASE WHEN estado = TRUE THEN 1 END) as proveedores_activos,
+                COUNT(CASE WHEN estado = FALSE THEN 1 END) as proveedores_inactivos,
+                (SELECT COUNT(DISTINCT id_proveedor) FROM proveedor_categoria) as proveedores_con_categorias,
+                (SELECT COUNT(*) FROM productos WHERE proveedor_id IS NOT NULL) as total_productos_asociados
+            FROM proveedores
+        `;
+        const [rows] = await pool.execute(query);
+        return rows[0];
+    }
 }
 
 module.exports = ProveedorModel;

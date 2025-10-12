@@ -292,6 +292,47 @@ class ProveedorController {
             });
         }
     }
+
+    // Contar proveedores
+    static async count(req, res) {
+        try {
+            const { includeInactive } = req.query;
+            const total = await ProveedorModel.countAll(includeInactive === 'true');
+
+            res.json({
+                success: true,
+                data: {
+                    total_proveedores: total
+                }
+            });
+        } catch (error) {
+            console.error('Error al contar proveedores:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Error al contar proveedores',
+                error: error.message
+            });
+        }
+    }
+
+    // Obtener estadísticas de proveedores
+    static async getEstadisticas(req, res) {
+        try {
+            const estadisticas = await ProveedorModel.getEstadisticas();
+
+            res.json({
+                success: true,
+                data: estadisticas
+            });
+        } catch (error) {
+            console.error('Error al obtener estadísticas:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Error al obtener estadísticas de proveedores',
+                error: error.message
+            });
+        }
+    }
 }
 
 module.exports = ProveedorController;

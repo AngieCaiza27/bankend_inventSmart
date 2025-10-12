@@ -9,6 +9,8 @@ router.use(verifyToken);
 
 // Rutas públicas para usuarios autenticados
 router.get('/', ProveedorController.getAll);
+router.get('/count', ProveedorController.count);
+router.get('/estadisticas', ProveedorController.getEstadisticas);
 router.get('/:id', ProveedorController.getById);
 router.get('/:id/categorias', ProveedorController.getCategories);
 
