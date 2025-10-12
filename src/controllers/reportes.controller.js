@@ -89,3 +89,42 @@ exports.tendenciasMensuales = async (req, res) => {
   }
 };
 
+exports.stockOverview = async (req, res) => {
+  try {
+    const datos = await Reportes.obtenerStockOverview();
+    res.json(datos);
+  } catch (error) {
+    res.status(500).json({ 
+      message: 'Error al obtener stock overview', 
+      error: error.message 
+    });
+  }
+};
+
+// Stock por categoría (gráfico circular)
+exports.stockPorCategoria = async (req, res) => {
+  try {
+    const datos = await Reportes.obtenerStockPorCategoria();
+    res.json(datos);
+  } catch (error) {
+    res.status(500).json({ 
+      message: 'Error al obtener stock por categoría', 
+      error: error.message 
+    });
+  }
+};
+
+// Historial de producto (opcional)
+exports.historialProducto = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { dias } = req.query;
+    const datos = await Reportes.obtenerHistorialProducto(id, dias);
+    res.json(datos);
+  } catch (error) {
+    res.status(500).json({ 
+      message: 'Error al obtener historial del producto', 
+      error: error.message 
+    });
+  }
+};

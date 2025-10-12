@@ -147,3 +147,66 @@ exports.obtenerTendenciasMensuales = async () => {
   return rows;
 };
 
+// Tu archivo de servicios (reportes.service.js o similar)
+
+// ========== NUEVOS MÉTODOS PARA GRÁFICOS DE STOCK ==========
+
+// Stock actual vs mínimo (para gráfico de barras)
+exports.obtenerStockOverview = async () => {
+  const [rows] = await pool.query(`
+    SELECT 
+      p.id,
+      p.nombre,
+      p.stock,
+      p.stock_minimo,
+      c.nombre AS categoria,
+      CASE 
+        WHEN p.stock = 0 THEN 'Agotado'
+        WHEN p.stock <= p.stock_minimo THEN 'Crítico'
+        WHEN p.stock <= (p.stock_minimo * 1.5) THEN 'Bajo'
+        ELSE 'Normal'
+      END AS nivel_stock
+    FROM productos p
+    LEFT JOIN categorias c ON p.categoria_id = c.id
+    WHERE p.estado = TRUE
+    ORDER BY p.stock ASC
+    LIMIT 20
+  `);
+  return rows;
+};
+
+// Stock por categoría (para gráfico circular)
+exports.obtenerStockPorCategoria = async () => {
+  const [rows] = await pool.query(`
+    SELECT 
+      c.nombre AS categoria,
+      c.id AS categoria_id,
+      COUNT(p.id) AS total_productos,
+      SUM(p.stock) AS stock_total,
+      ROUND(AVG(p.stock), 2) AS stock_promedio
+    FROM productos p
+    INNER JOIN categorias c ON p.categoria_id = c.id
+    WHERE p.estado = TRUE
+    GROUP BY c.id, c.nombre
+    ORDER BY stock_total DESC
+  `);
+  return rows;
+};
+
+// Historial de stock de un producto (para gráfico de líneas - opcional)
+exports.obtenerHistorialProducto = async (productoId, dias = 30) => {
+  const [rows] = await pool.query(`
+    SELECT 
+      DATE(h.fecha) AS fecha,
+      h.cambio,
+      h.motivo,
+      p.nombre AS producto,
+      p.stock AS stock_actual
+    FROM historial_stock h
+    INNER JOIN productos p ON h.producto_id = p.id
+    WHERE h.producto_id = ?
+      AND h.fecha >= DATE_SUB(NOW(), INTERVAL ? DAY)
+    ORDER BY h.fecha ASC
+  `, [productoId, dias]);
+  return rows;
+};
