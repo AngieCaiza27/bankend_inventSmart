@@ -1,6 +1,6 @@
 const Reportes = require('../models/reportes.model');
 
-// 1️⃣ Reporte de ventas
+//  Reporte de ventas
 exports.reporteVentas = async (req, res) => {
   try {
     const datos = await Reportes.obtenerReporteVentas();
@@ -10,7 +10,7 @@ exports.reporteVentas = async (req, res) => {
   }
 };
 
-// 2️⃣ Reporte de stock actual
+//  Reporte de stock actual
 exports.reporteStock = async (req, res) => {
   try {
     const datos = await Reportes.obtenerReporteStock();
@@ -20,7 +20,7 @@ exports.reporteStock = async (req, res) => {
   }
 };
 
-// 3️⃣ Productos próximos a agotarse
+// Productos próximos a agotarse
 exports.productosAgotados = async (req, res) => {
   try {
     const datos = await Reportes.obtenerProductosAgotados();
@@ -30,7 +30,7 @@ exports.productosAgotados = async (req, res) => {
   }
 };
 
-// 4️⃣ Tendencias (para gráficos)
+//  Tendencias (para gráficos)
 exports.tendenciasVentas = async (req, res) => {
   try {
     const datos = await Reportes.obtenerTendenciasVentas();
@@ -40,7 +40,7 @@ exports.tendenciasVentas = async (req, res) => {
   }
 };
 
-// 5️⃣ Estadísticas generales
+//  Estadísticas generales
 exports.estadisticasGenerales = async (req, res) => {
   try {
     const datos = await Reportes.obtenerEstadisticasGenerales();
@@ -49,3 +49,43 @@ exports.estadisticasGenerales = async (req, res) => {
     res.status(500).json({ message: 'Error al obtener estadísticas', error: error.message });
   }
 };
+// Conteo de proveedores
+exports.conteoProveedores = async (req, res) => {
+  try {
+    const datos = await Reportes.obtenerConteoProveedores();
+    res.json(datos);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener conteo de proveedores', error: error.message });
+  }
+};
+
+// Ventas del mes actual
+exports.ventasMesActual = async (req, res) => {
+  try {
+    const datos = await Reportes.obtenerVentasMesActual();
+    res.json(datos);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener ventas del mes actual', error: error.message });
+  }
+};
+
+// Ventas por categoría
+exports.ventasPorCategoria = async (req, res) => {
+  try {
+    const datos = await Reportes.obtenerVentasPorCategoria();
+    res.json(datos);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener ventas por categoría', error: error.message });
+  }
+};
+
+//  Tendencias mensuales
+exports.tendenciasMensuales = async (req, res) => {
+  try {
+    const datos = await Reportes.obtenerTendenciasMensuales();
+    res.json(datos);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener tendencias mensuales', error: error.message });
+  }
+};
+
