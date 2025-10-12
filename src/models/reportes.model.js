@@ -1,6 +1,6 @@
 const { pool } = require('../config/database');
 
-// 1️⃣ Reporte general de ventas
+//  Reporte general de ventas
 exports.obtenerReporteVentas = async () => {
   const [rows] = await pool.query(`
     SELECT 
@@ -18,7 +18,7 @@ exports.obtenerReporteVentas = async () => {
   return rows;
 };
 
-// 2️⃣ Reporte de stock actual (desde historial_stock)
+//  Reporte de stock actual (desde historial_stock)
 exports.obtenerReporteStock = async () => {
   const [rows] = await pool.query(`
     SELECT 
@@ -34,7 +34,7 @@ exports.obtenerReporteStock = async () => {
   return rows;
 };
 
-// 3️⃣ Productos próximos a agotarse (stock <= stock_minimo)
+// Productos próximos a agotarse (stock <= stock_minimo)
 exports.obtenerProductosAgotados = async () => {
   const [rows] = await pool.query(`
     SELECT 
@@ -49,7 +49,7 @@ exports.obtenerProductosAgotados = async () => {
   return rows;
 };
 
-// 4️⃣ Datos para gráficos de tendencias (ventas por día)
+// Datos para gráficos de tendencias (ventas por día)
 exports.obtenerTendenciasVentas = async () => {
   const [rows] = await pool.query(`
     SELECT 
@@ -63,7 +63,7 @@ exports.obtenerTendenciasVentas = async () => {
   return rows;
 };
 
-// 5️⃣ Estadísticas generales
+// Estadísticas generales
 exports.obtenerEstadisticasGenerales = async () => {
   const [[totales]] = await pool.query(`
     SELECT 
@@ -85,3 +85,65 @@ exports.obtenerEstadisticasGenerales = async () => {
     ...productos
   };
 };
+// Conteo de proveedores
+exports.obtenerConteoProveedores = async () => {
+  const [[result]] = await pool.query(`
+    SELECT COUNT(id) AS total_proveedores
+    FROM proveedores
+    WHERE estado = TRUE
+  `);
+  return result;
+};
+
+// Ventas del mes actual
+exports.obtenerVentasMesActual = async () => {
+  const [rows] = await pool.query(`
+    SELECT 
+      v.id,
+      DATE(v.fecha) AS fecha,
+      p.nombre AS producto,
+      c.nombre AS categoria,
+      v.unidades,
+      v.total,
+      u.nombre AS usuario
+    FROM ventas v
+    INNER JOIN productos p ON v.producto_id = p.id
+    INNER JOIN categorias c ON p.categoria_id = c.id
+    INNER JOIN usuarios u ON v.usuario_id = u.id
+    WHERE MONTH(v.fecha) = MONTH(CURRENT_DATE())
+      AND YEAR(v.fecha) = YEAR(CURRENT_DATE())
+    ORDER BY v.fecha DESC
+  `);
+  return rows;
+};
+
+// Ventas por categoría
+exports.obtenerVentasPorCategoria = async () => {
+  const [rows] = await pool.query(`
+    SELECT 
+      c.nombre AS categoria,
+      SUM(v.unidades) AS unidades_vendidas,
+      SUM(v.total) AS total_vendido
+    FROM ventas v
+    INNER JOIN productos p ON v.producto_id = p.id
+    INNER JOIN categorias c ON p.categoria_id = c.id
+    GROUP BY c.nombre
+    ORDER BY total_vendido DESC
+  `);
+  return rows;
+};
+
+// Tendencias mensuales (para agrupar por mes)
+exports.obtenerTendenciasMensuales = async () => {
+  const [rows] = await pool.query(`
+    SELECT 
+      DATE_FORMAT(v.fecha, '%Y-%m') AS mes,
+      SUM(v.total) AS total_mensual,
+      SUM(v.unidades) AS unidades_vendidas
+    FROM ventas v
+    GROUP BY DATE_FORMAT(v.fecha, '%Y-%m')
+    ORDER BY mes ASC
+  `);
+  return rows;
+};
+
