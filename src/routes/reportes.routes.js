@@ -13,6 +13,10 @@ router.get('/ventas-mes', reportesController.ventasMesActual);
 router.get('/ventas-categoria', reportesController.ventasPorCategoria);
 router.get('/tendencias-mensuales', reportesController.tendenciasMensuales);
 
+//rutas agregadas
+router.get('/stock-overview', reportesController.stockOverview);
+router.get('/stock-por-categoria', reportesController.stockPorCategoria);
+router.get('/historial-producto/:id', reportesController.historialProducto);
 
 
 module.exports = router;
