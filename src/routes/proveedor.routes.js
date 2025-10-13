@@ -17,7 +17,7 @@ router.get('/:id/categorias', ProveedorController.getCategories);
 // Rutas solo para administradores
 router.post('/', isAdmin, ProveedorController.create);
 router.put('/:id', isAdmin, ProveedorController.update);
-router.patch('/:id/status', isAdmin, ProveedorController.changeStatus);
+router.put('/:id/status', isAdmin, ProveedorController.changeStatus);
 router.delete('/:id', isAdmin, ProveedorController.delete);
 
 module.exports = router;

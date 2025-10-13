@@ -265,6 +265,10 @@ class ProductoModel {
         const [rows] = await pool.execute(query);
         return rows[0];
     }
+
+   
+
+
 }
 
 module.exports = ProductoModel;

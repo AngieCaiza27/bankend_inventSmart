@@ -1,5 +1,6 @@
 // src/controllers/proveedor.controller.js
 const ProveedorModel = require('../models/proveedor.model');
+const { pool } = require('../config/database');
 
 class ProveedorController {
     // Crear proveedor
@@ -262,6 +263,78 @@ class ProveedorController {
             });
         }
     }
+
+    
+
+static async delete(req, res) {
+        const conn = await pool.getConnection();
+        const id = Number(req.params?.id);
+
+        try {
+            if (!id || Number.isNaN(id)) {
+                return res.status(400).json({ success: false, message: 'ID inválido' });
+            }
+
+            const proveedor = await ProveedorModel.findById(id);
+            if (!proveedor) {
+                return res.status(404).json({ success: false, message: 'Proveedor no encontrado' });
+            }
+
+            const tieneProductos = await ProveedorModel.hasProducts(id);
+            if (tieneProductos) {
+                // Conflicto: no se puede borrar porque hay referencias
+                return res.status(409).json({
+                    success: false,
+                    code: 'HAS_PRODUCTS',
+                    message: 'No se puede eliminar: el proveedor tiene productos asociados. Desactívelo.'
+                });
+            }
+
+            await conn.beginTransaction();
+
+            // borra pivot si no tienes ON DELETE CASCADE en proveedor_categoria
+            await conn.execute('DELETE FROM proveedor_categoria WHERE id_proveedor = ?', [id]);
+
+            // borra el proveedor
+            const [result] = await conn.execute('DELETE FROM proveedores WHERE id = ?', [id]);
+
+            await conn.commit();
+
+            if (result.affectedRows === 0) {
+                return res.status(404).json({ success: false, message: 'Proveedor no encontrado' });
+            }
+
+            return res.json({ success: true, message: 'Proveedor eliminado exitosamente' });
+
+        } catch (error) {
+            await conn.rollback();
+            // 🔎 Logs útiles en consola para depurar rápido
+            console.error('[DELETE proveedor] error:', {
+                msg: error?.message,
+                code: error?.code,
+                errno: error?.errno,
+                sqlState: error?.sqlState
+            });
+
+            // Mapea FK 1451 (ER_ROW_IS_REFERENCED_2) a 409
+            if (error?.errno === 1451 || error?.code === 'ER_ROW_IS_REFERENCED_2') {
+                return res.status(409).json({
+                    success: false,
+                    code: 'HAS_DEPENDENCIES',
+                    message: 'No se puede eliminar por dependencias (FK).'
+                });
+            }
+
+            return res.status(500).json({
+                success: false,
+                message: 'Error al eliminar proveedor',
+                error: error?.message || 'Internal Server Error'
+            });
+        } finally {
+            conn.release();
+        }
+    }
+
 
     // Obtener categorías de un proveedor
     static async getCategories(req, res) {

@@ -186,6 +186,17 @@ class ProveedorModel {
         const [rows] = await pool.execute(query);
         return rows[0];
     }
+
+    static async deleteById(id, connection = null) {
+        const exec = connection ? connection.execute.bind(connection) : pool.execute.bind(pool);
+        const [result] = await exec('DELETE FROM proveedores WHERE id = ?', [id]);
+        return result.affectedRows > 0;
+    }
+
+    static async deletePivotByProveedor(id, connection = null) {
+        const exec = connection ? connection.execute.bind(connection) : pool.execute.bind(pool);
+        await exec('DELETE FROM proveedor_categoria WHERE id_proveedor = ?', [id]);
+    }
 }
 
 module.exports = ProveedorModel;

@@ -26,7 +26,8 @@ exports.obtenerReporteStock = async () => {
       p.nombre AS producto,
       h.cambio,
       h.motivo,
-      h.fecha
+      h.fecha,
+      h.stock_despues
     FROM historial_stock h
     INNER JOIN productos p ON h.producto_id = p.id
     ORDER BY h.fecha DESC
