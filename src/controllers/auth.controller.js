@@ -2,6 +2,9 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const UsuarioModel = require('../models/usuario.model');
+const { sendResetCode } = require('../config/email.config');  // AGREGADO
+//const db = require('../config/database'); 
+const { pool } = require('../config/database');
 
 class AuthController {
     // Registro de usuarios
@@ -199,6 +202,133 @@ class AuthController {
             res.status(500).json({
                 success: false,
                 message: 'Error al cambiar contraseña',
+                error: error.message
+            });
+        }
+    }
+
+    // Solicitar código de recuperación de contraseña
+    static async forgotPassword(req, res) {
+        try {
+            const { correo } = req.body;
+
+            if (!correo) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'El correo es obligatorio'
+                });
+            }
+
+            // Verificar si el usuario existe
+            const usuario = await UsuarioModel.findByEmail(correo);
+            
+            // Por seguridad, siempre responder igual
+            if (!usuario) {
+                return res.json({
+                    success: true,
+                    message: 'Si el correo existe, recibirás un código de recuperación'
+                });
+            }
+
+            // Generar código aleatorio de 6 dígitos
+            const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+            // Calcular fecha de expiración (15 minutos)
+            const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+            // Guardar código en la base de datos
+            await pool.query(
+                'INSERT INTO reseteo_clave (user_email, token, expires_at) VALUES (?, ?, ?)',
+                [correo, code, expiresAt]
+            );
+
+            // Enviar email con SendGrid
+            const emailResult = await sendResetCode(correo, code);
+
+            if (!emailResult.success) {
+                return res.status(500).json({
+                    success: false,
+                    message: 'Error al enviar el correo electrónico'
+                });
+            }
+
+            res.json({
+                success: true,
+                message: 'Si el correo existe, recibirás un código de recuperación'
+            });
+
+        } catch (error) {
+            console.error('Error en forgotPassword:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Error al procesar la solicitud',
+                error: error.message
+            });
+        }
+    }
+
+    // Resetear contraseña con el código recibido
+    static async resetPassword(req, res) {
+        try {
+            const { correo, codigo, nuevaContrasena } = req.body;
+
+            if (!correo || !codigo || !nuevaContrasena) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Todos los campos son obligatorios'
+                });
+            }
+
+            if (nuevaContrasena.length < 6) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'La contraseña debe tener al menos 6 caracteres'
+                });
+            }
+
+            // Buscar código válido
+            const [resets] = await pool.query(
+                `SELECT * FROM reseteo_clave 
+                 WHERE user_email = ? 
+                 AND token = ? 
+                 AND usado = FALSE 
+                 AND expires_at > NOW() 
+                 ORDER BY created_at DESC 
+                 LIMIT 1`,
+                [correo, codigo]
+            );
+
+            if (!resets || resets.length === 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Código inválido o expirado'
+                });
+            }
+
+            // Encriptar nueva contraseña
+            const salt = await bcrypt.genSalt(10);
+            const contrasenaHash = await bcrypt.hash(nuevaContrasena, salt);
+
+            // Actualizar contraseña
+            const usuario = await UsuarioModel.findByEmail(correo);
+            await UsuarioModel.updatePassword(usuario.id, contrasenaHash);
+
+            // Marcar código como usado
+            await pool.query(
+                'UPDATE reseteo_clave SET usado = TRUE WHERE id = ?',
+                [resets[0].id]
+            );
+
+            res.json({
+                success: true,
+                message: 'Contraseña actualizada exitosamente'
+            });
+
+        } catch (error) {
+            console.error('Error en resetPassword:', error);
+            res.status(500).json({
+                success: false,
+                message: 'Error al resetear la contraseña',
                 error: error.message
             });
         }
