@@ -105,6 +105,8 @@ Esta documentación contiene todas las rutas disponibles en la rama `pruebaBacke
 
 ## 💰 Ventas (`/api/ventas`)
 
+> Nota: Estas rutas no tienen middleware de autenticación definido en el archivo de rutas
+
 | Método | Ruta | Descripción |
 |--------|------|-------------|
 | POST | `/api/ventas` | Registrar una venta |
@@ -114,6 +116,8 @@ Esta documentación contiene todas las rutas disponibles en la rama `pruebaBacke
 ---
 
 ## 📊 Reportes (`/api/reportes`)
+
+> Nota: Estas rutas no tienen middleware de autenticación definido en el archivo de rutas
 
 | Método | Ruta | Descripción |
 |--------|------|-------------|
