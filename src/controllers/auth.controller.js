@@ -267,6 +267,52 @@ class AuthController {
         }
     }
 
+    // Verificar código sin consumirlo
+static async verifyCode(req, res) {
+    try {
+        const { correo, codigo } = req.body;
+
+        if (!correo || !codigo) {
+            return res.status(400).json({
+                success: false,
+                message: 'Correo y código son obligatorios'
+            });
+        }
+
+        // Buscar código válido SIN marcarlo como usado
+        const [resets] = await pool.query(
+            `SELECT * FROM reseteo_clave 
+             WHERE user_email = ? 
+             AND token = ? 
+             AND usado = FALSE 
+             AND expires_at > NOW() 
+             ORDER BY created_at DESC 
+             LIMIT 1`,
+            [correo, codigo]
+        );
+
+        if (!resets || resets.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Código inválido o expirado'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Código válido'
+        });
+
+    } catch (error) {
+        console.error('Error en verifyCode:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error al verificar código',
+            error: error.message
+        });
+    }
+}
+
     // Resetear contraseña con el código recibido
     static async resetPassword(req, res) {
         try {
