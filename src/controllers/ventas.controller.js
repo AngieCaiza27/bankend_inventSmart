@@ -54,3 +54,32 @@ exports.detallePorProducto = async (req, res) => {
     });
   }
 };
+
+// Total de ventas generales
+exports.totalVentas = async (req, res) => {
+  try {
+    const total = await Ventas.obtenerTotalVentas();
+    res.json({ success: true, data: total });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error al obtener total de ventas',
+      error: error.message
+    });
+  }
+};
+
+// Total de ventas hoy
+exports.totalVentasHoy = async (req, res) => {
+  try {
+    const total = await Ventas.obtenerTotalVentasHoy();
+    res.json({ success: true, data: total });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error al obtener total de ventas hoy',
+      error: error.message
+    });
+  }
+};
+

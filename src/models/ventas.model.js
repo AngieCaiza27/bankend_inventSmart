@@ -85,3 +85,27 @@ exports.obtenerDetallePorProducto = async (producto_id) => {
 
   return rows;
 };
+
+// Obtener total de ventas acumulado
+exports.obtenerTotalVentas = async () => {
+  const [rows] = await pool.query(`
+    SELECT 
+      SUM(total) AS total_ventas,
+      COUNT(*) AS total_registros
+    FROM ventas
+  `);
+  return rows[0]; // { total_ventas: 1234.50, total_registros: 50 }
+};
+
+// Opcional: total de ventas por día
+exports.obtenerTotalVentasHoy = async () => {
+  const [rows] = await pool.query(`
+    SELECT 
+      SUM(total) AS total_hoy,
+      COUNT(*) AS ventas_hoy
+    FROM ventas
+    WHERE DATE(fecha) = CURDATE()
+  `);
+  return rows[0];
+};
+
