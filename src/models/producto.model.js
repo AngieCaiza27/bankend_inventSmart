@@ -198,20 +198,26 @@ class ProductoModel {
     // Obtener productos con stock bajo
     static async getProductosStockBajo() {
         const query = `
-            SELECT 
-                p.*,
-                c.nombre as categoria_nombre,
-                pr.empresa as proveedor_nombre
-            FROM productos p
-            LEFT JOIN categorias c ON p.categoria_id = c.id
-            LEFT JOIN proveedores pr ON p.proveedor_id = pr.id
-            WHERE p.stock <= p.stock_minimo AND p.estado = TRUE
-            ORDER BY p.stock ASC
-        `;
+        SELECT 
+            p.*,
+            c.nombre as categoria_nombre,
+            pr.empresa as proveedor_nombre
+        FROM productos p
+        LEFT JOIN categorias c ON p.categoria_id = c.id
+        LEFT JOIN proveedores pr ON p.proveedor_id = pr.id
+        WHERE 
+            (
+                p.stock = 0 
+                OR p.stock <= p.stock_minimo
+            )
+            AND p.estado IN ('activo', 'agotado')
+        ORDER BY p.stock ASC
+    `;
+
         const [rows] = await pool.execute(query);
         return rows;
     }
-
+    
     // Verificar si tiene ventas asociadas
     static async hasVentas(id) {
         const query = 'SELECT COUNT(*) as count FROM ventas WHERE producto_id = ?';

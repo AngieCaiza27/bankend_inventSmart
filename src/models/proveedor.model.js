@@ -197,6 +197,14 @@ class ProveedorModel {
         const exec = connection ? connection.execute.bind(connection) : pool.execute.bind(pool);
         await exec('DELETE FROM proveedor_categoria WHERE id_proveedor = ?', [id]);
     }
+
+    // Buscar proveedores por nombre (empresa)
+    // src/models/proveedor.model.js
+    static async findByName(nombreEmpresa) {
+        const query = 'SELECT * FROM proveedores WHERE LOWER(empresa) = LOWER(?) LIMIT 1';
+        const [rows] = await pool.execute(query, [nombreEmpresa]);
+        return rows[0] || null;
+    }
 }
 
 module.exports = ProveedorModel;
