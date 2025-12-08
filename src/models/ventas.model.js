@@ -153,11 +153,12 @@ exports.obtenerDetallePorProducto = async (producto_id) => {
 exports.obtenerTotalVentas = async () => {
   const [rows] = await pool.query(`
     SELECT 
-      SUM(total) AS total_ventas,
-      COUNT(*) AS total_registros
+      IFNULL(SUM(total), 0) AS total_ventas,
+      COUNT(id) AS total_registros
     FROM ventas
   `);
-  return rows[0]; // { total_ventas: 1234.50, total_registros: 50 }
+
+  return rows[0]; // ← SIEMPRE devuelve algo
 };
 
 // Opcional: total de ventas por día

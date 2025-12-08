@@ -11,12 +11,10 @@ router.get('/historial', ventasController.historialVentas);
 //  Detalle de ventas por producto
 router.get('/producto/:id', ventasController.detallePorProducto);
 
-// Detalle de ventas por producto
-router.get('/producto/:id', ventasController.detallePorProducto);
-
 // **Nueva ruta: total de ventas hoy**
 router.get('/total-hoy', ventasController.totalVentasHoy);
 
 router.post('/carrito', ventasController.registrarVentaCarrito);
+router.get('/total', ventasController.totalVentas);
 
 module.exports = router;
