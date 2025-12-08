@@ -68,6 +68,7 @@ exports.registrarVentaCarrito = async (usuario_id, productos) => {
       }
 
       const total = producto[0].precio * unidades;
+      const stockDespues = producto[0].stock - unidades; // <-- calculamos el stock final
 
       // ✅ SOLO UNA VENTA GENERAL
       if (!ventaIdGlobal) {
@@ -78,16 +79,10 @@ exports.registrarVentaCarrito = async (usuario_id, productos) => {
         ventaIdGlobal = venta.insertId;
       }
 
-      // ✅ ACTUALIZAR STOCK (UNA VEZ)
+      // ✅ HISTORIAL ÚNICO POR PRODUCTO, ahora guardando stock_despues
       await connection.query(
-        'UPDATE productos SET stock = stock - ? WHERE id = ?',
-        [unidades, producto_id]
-      );
-
-      // ✅ HISTORIAL ÚNICO POR PRODUCTO
-      await connection.query(
-        `INSERT INTO historial_stock (producto_id, cambio, motivo)
-         SELECT ?, ?, ?
+        `INSERT INTO historial_stock (producto_id, cambio, motivo, stock_despues)
+         SELECT ?, ?, ?, ?
          WHERE NOT EXISTS (
            SELECT 1 FROM historial_stock 
            WHERE producto_id = ? AND motivo = ?
@@ -96,9 +91,16 @@ exports.registrarVentaCarrito = async (usuario_id, productos) => {
           producto_id,
           -unidades,
           `Venta ID: ${ventaIdGlobal}`,
+          stockDespues,
           producto_id,
           `Venta ID: ${ventaIdGlobal}`
         ]
+      );
+
+      // ✅ ACTUALIZAR STOCK en productos con el stock_despues
+      await connection.query(
+        'UPDATE productos SET stock = ? WHERE id = ?',
+        [stockDespues, producto_id]
       );
     }
 
@@ -112,6 +114,7 @@ exports.registrarVentaCarrito = async (usuario_id, productos) => {
     connection.release();
   }
 };
+
 
 //  Obtener historial general de ventas (todas las ventas)
 exports.obtenerHistorial = async () => {
