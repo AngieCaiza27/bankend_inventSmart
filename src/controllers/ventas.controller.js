@@ -1,17 +1,13 @@
 const Ventas = require('../models/ventas.model');
 
-exports.registrarVenta = async (req, res) => {
+/*exports.registrarVenta = async (req, res) => {
   try {
-    console.log('Datos recibidos:', req.body);
-
     const { producto_id, unidades, usuario_id } = req.body;
 
-    // Validar datos
     if (!producto_id || !unidades || !usuario_id) {
-      return res.status(400).json({ message: 'Faltan datos para registrar la venta' });
+      return res.status(400).json({ message: 'Faltan datos' });
     }
 
-    // Registrar venta y obtener ID insertado
     const ventaId = await Ventas.registrarVenta(producto_id, unidades, usuario_id);
 
     res.status(201).json({
@@ -20,10 +16,31 @@ exports.registrarVenta = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error en registrarVenta:', error);
+    console.error(error);
+    res.status(500).json({ message: 'Error al registrar venta' });
+  }
+};
+*/
+exports.registrarVentaCarrito = async (req, res) => {
+  try {
+    const { usuario_id, productos } = req.body;
+
+    if (!usuario_id || !Array.isArray(productos) || productos.length === 0) {
+      return res.status(400).json({ message: 'Datos incompletos' });
+    }
+
+    const ventaId = await Ventas.registrarVentaCarrito(usuario_id, productos);
+
+    res.status(201).json({
+      success: true,
+      venta_id: ventaId
+    });
+
+  } catch (error) {
+    console.error("❌ Error en registrarVentaCarrito:", error);
     res.status(500).json({
-      message: 'Error al registrar venta',
-      error: error.message,
+      message: 'Error al registrar la venta',
+      error: error.message
     });
   }
 };

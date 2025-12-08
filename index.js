@@ -12,11 +12,13 @@ const startServer = async () => {
     await testConnection(); // Esto viene del pool.promise()
 
     // 2. Iniciar el servidor Express
-    app.listen(PORT, () => {
+    app.listen(PORT, '0.0.0.0', () => {
       console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
       console.log(`📝 Modo: ${process.env.NODE_ENV}`);
-      console.log(`🌐 URL: http://localhost:${PORT}`);
+      console.log(`🌐 URL Local: http://localhost:${PORT}`);
+      console.log(`🌐 URL Red: http://192.168.1.27:${PORT}`);
     });
+
 
   } catch (error) {
     console.error('❌ Error al iniciar el servidor:', error);

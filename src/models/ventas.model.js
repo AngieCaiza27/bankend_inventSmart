@@ -1,48 +1,43 @@
 const { pool } = require('../config/database');
 
-//  Registrar una venta
-exports.registrarVenta = async (producto_id, unidades, usuario_id) => {
-  // Buscar el producto y su stock
-  const [producto] = await pool.query(
-    'SELECT precio, stock FROM productos WHERE id = ?',
-    [producto_id]
-  );
-
-  if (!producto.length) throw new Error('Producto no encontrado');
-
-  const { precio, stock } = producto[0];
-  if (stock < unidades) throw new Error('Stock insuficiente');
-
-  // Calcular total
-  const total = precio * unidades;
-
-  // Iniciar transacción para asegurar consistencia
+//*/  Registrar una venta
+/*exports.registrarVenta = async (producto_id, unidades, usuario_id) => {
   const connection = await pool.getConnection();
+
   try {
+    const [producto] = await connection.query(
+      'SELECT precio, stock FROM productos WHERE id = ?',
+      [producto_id]
+    );
+
+    if (!producto.length) throw new Error('Producto no encontrado');
+    if (producto[0].stock < unidades) throw new Error('Stock insuficiente');
+
+    const total = producto[0].precio * unidades;
+
     await connection.beginTransaction();
 
-    // Insertar la venta
-    const [result] = await connection.query(
+    // ✅ 1. Registrar venta
+    const [venta] = await connection.query(
       'INSERT INTO ventas (producto_id, unidades, total, usuario_id) VALUES (?, ?, ?, ?)',
       [producto_id, unidades, total, usuario_id]
     );
 
-    // Actualizar stock del producto
+    // ✅ 2. Actualizar stock
     await connection.query(
       'UPDATE productos SET stock = stock - ? WHERE id = ?',
       [unidades, producto_id]
     );
 
-    // Registrar movimiento en historial_stock
+    // ✅ 3. UN SOLO HISTORIAL
     await connection.query(
-      `INSERT INTO historial_stock (producto_id, cambio, motivo) VALUES (?, ?, ?)`,
-      [producto_id, -unidades, 'Venta de realizada']
+      'INSERT INTO historial_stock (producto_id, cambio, motivo) VALUES (?, ?, ?)',
+      [producto_id, -unidades, `Venta ID: ${venta.insertId}`]
     );
 
-    // Confirmar transacción
     await connection.commit();
+    return venta.insertId;
 
-    return result.insertId;
   } catch (error) {
     await connection.rollback();
     throw error;
@@ -50,6 +45,74 @@ exports.registrarVenta = async (producto_id, unidades, usuario_id) => {
     connection.release();
   }
 };
+*/
+exports.registrarVentaCarrito = async (usuario_id, productos) => {
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    let ventaIdGlobal = null;
+
+    for (const item of productos) {
+      const { producto_id, unidades } = item;
+
+      const [producto] = await connection.query(
+        'SELECT precio, stock FROM productos WHERE id = ?',
+        [producto_id]
+      );
+
+      if (!producto.length) throw new Error('Producto no existe');
+      if (producto[0].stock < unidades) {
+        throw new Error('Stock insuficiente');
+      }
+
+      const total = producto[0].precio * unidades;
+
+      // ✅ SOLO UNA VENTA GENERAL
+      if (!ventaIdGlobal) {
+        const [venta] = await connection.query(
+          'INSERT INTO ventas (producto_id, unidades, total, usuario_id) VALUES (?, ?, ?, ?)',
+          [producto_id, unidades, total, usuario_id]
+        );
+        ventaIdGlobal = venta.insertId;
+      }
+
+      // ✅ ACTUALIZAR STOCK (UNA VEZ)
+      await connection.query(
+        'UPDATE productos SET stock = stock - ? WHERE id = ?',
+        [unidades, producto_id]
+      );
+
+      // ✅ HISTORIAL ÚNICO POR PRODUCTO
+      await connection.query(
+        `INSERT INTO historial_stock (producto_id, cambio, motivo)
+         SELECT ?, ?, ?
+         WHERE NOT EXISTS (
+           SELECT 1 FROM historial_stock 
+           WHERE producto_id = ? AND motivo = ?
+         )`,
+        [
+          producto_id,
+          -unidades,
+          `Venta ID: ${ventaIdGlobal}`,
+          producto_id,
+          `Venta ID: ${ventaIdGlobal}`
+        ]
+      );
+    }
+
+    await connection.commit();
+    return ventaIdGlobal;
+
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+};
+
 //  Obtener historial general de ventas (todas las ventas)
 exports.obtenerHistorial = async () => {
   const [rows] = await pool.query(`
